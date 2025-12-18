@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VHF Triangulation</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; }
+        #map { height: 100vh; width: 100vw; z-index: 1; }
+        
+        /* UI Overlays */
+        .overlay { position: absolute; z-index: 1000; pointer-events: none; width: 100%; }
+        
+        #compass-container { bottom: 20px; display: flex; flex-direction: column; align-items: center; }
+        #bearing-val { background: rgba(0,0,0,0.7); color: white; padding: 5px 15px; border-radius: 20px; font-size: 24px; margin-bottom: 10px; }
+        
+        /* The Antenna Line (CSS Overlay) */
+        #crosshair { 
+            position: absolute; top: 50%; left: 50%; width: 2px; height: 100vh;
+            background: repeating-linear-gradient(to top, white, white 10px, transparent 10px, transparent 20px);
+            transform: translate(-50%, -100%); z-index: 500;
+        }
+
+        #controls { position: absolute; top: 20px; right: 20px; pointer-events: auto; }
+        .btn { background: #ff4444; color: white; border: none; padding: 15px; border-radius: 50%; width: 60px; height: 60px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+    </style>
+</head>
+<body>
+
+<div id="crosshair"></div>
+<div id="map"></div>
+
+<div class="overlay" id="controls">
+    <button class="btn" id="lock-btn">LOCK</button>
+</div>
+
+<div class="overlay" id="compass-container">
+    <div id="bearing-val">0°</div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>
