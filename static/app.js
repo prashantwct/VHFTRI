@@ -1,38 +1,61 @@
-let map, userMarker, liveLine;
+let map, userMarker;
 let currentHeading = 0;
-let userPos = [0, 0];
+let sensorsStarted = false;
 
-// Initialize Map
 function initMap() {
-    map = L.map('map', { zoomControl: false }).setView([0, 0], 15);
+    // Start at a default or current location
+    map = L.map('map', { zoomControl: false }).setView([27.7, 85.3], 13); 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-    userMarker = L.marker([0, 0]).addTo(map);
+    userMarker = L.marker([27.7, 85.3]).addTo(map);
+
+    // Update location immediately
+    navigator.geolocation.getCurrentPosition(pos => {
+        const p = [pos.coords.latitude, pos.coords.longitude];
+        map.setView(p, 15);
+        userMarker.setLatLng(p);
+    });
 }
 
-// Request Compass Permission (iOS requirement)
+// Fault Fix: iOS requires a user gesture to request permissions
 async function startSensors() {
-    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-        const response = await DeviceOrientationEvent.requestPermission();
-        if (response === 'granted') window.addEventListener('deviceorientation', handleOrientation);
+    if (sensorsStarted) return true;
+    
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        try {
+            const response = await DeviceOrientationEvent.requestPermission();
+            if (response === 'granted') {
+                window.addEventListener('deviceorientation', handleOrientation);
+                sensorsStarted = true;
+                return true;
+            }
+        } catch (e) { console.error(e); }
     } else {
         window.addEventListener('deviceorientation', handleOrientation);
+        sensorsStarted = true;
+        return true;
     }
+    return false;
 }
 
 function handleOrientation(e) {
-    // alpha is rotation around z-axis
     currentHeading = e.webkitCompassHeading || (360 - e.alpha);
     document.getElementById('bearing-val').innerText = Math.round(currentHeading) + "°";
     
-    // Rotate the map to match the antenna direction
-    map.setBearing(currentHeading); 
+    // Fault Fix: Leaflet doesn't have setBearing. 
+    // We rotate the marker or the CSS container instead.
+    const icon = document.querySelector('.leaflet-marker-icon');
+    if (icon) icon.style.transform += ` rotate(${currentHeading}deg)`;
 }
 
-// Lock Location and Bearing
 document.getElementById('lock-btn').onclick = async () => {
+    // Activate sensors on first click (iOS compliance)
+    const active = await startSensors();
+    if (!active) { alert("Compass access denied"); return; }
+
     navigator.geolocation.getCurrentPosition(async (pos) => {
         const data = {
-            group_id: "SESSION_" + Date.now(),
+            // Fault Fix: use a slightly more unique ID or a shared session ID
+            group_id: "SESSION_" + new Date().toISOString().slice(0,13), 
             pango_id: "P01",
             lat: pos.coords.latitude,
             lon: pos.coords.longitude,
@@ -40,19 +63,16 @@ document.getElementById('lock-btn').onclick = async () => {
             time: new Date().toISOString()
         };
 
-        // Sync to your Python Flask route
-        const response = await fetch('/sync', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify([data])
-        });
-        
-        const res = await response.json();
-        alert(res.messages[0]);
+        try {
+            const response = await fetch('/sync', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify([data])
+            });
+            const res = await response.json();
+            alert(res.messages[0]);
+        } catch (err) { alert("Sync failed"); }
     }, null, { enableHighAccuracy: true });
 };
 
-window.onload = () => {
-    initMap();
-    startSensors();
-};
+window.onload = initMap;
