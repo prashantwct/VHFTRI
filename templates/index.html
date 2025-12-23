@@ -7,24 +7,33 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; }
+        body { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; background: #000; }
         #map { height: 100vh; width: 100vw; z-index: 1; }
         
         /* UI Overlays */
         .overlay { position: absolute; z-index: 1000; pointer-events: none; width: 100%; }
         
-        #compass-container { bottom: 20px; display: flex; flex-direction: column; align-items: center; }
-        #bearing-val { background: rgba(0,0,0,0.7); color: white; padding: 5px 15px; border-radius: 20px; font-size: 24px; margin-bottom: 10px; }
+        #compass-container { bottom: 40px; display: flex; flex-direction: column; align-items: center; }
+        #bearing-val { background: rgba(0,0,0,0.8); color: #fff; padding: 8px 20px; border-radius: 25px; font-size: 28px; font-weight: bold; border: 2px solid #ff4444; }
         
-        /* The Antenna Line (CSS Overlay) */
+        /* The Antenna Line (Corrected for Rotation) */
         #crosshair { 
-            position: absolute; top: 50%; left: 50%; width: 2px; height: 100vh;
-            background: repeating-linear-gradient(to top, white, white 10px, transparent 10px, transparent 20px);
-            transform: translate(-50%, -100%); z-index: 500;
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            width: 4px; 
+            height: 100vh;
+            background: linear-gradient(to top, transparent, #ff4444);
+            /* Rotate from the center of the screen */
+            transform-origin: bottom center; 
+            transform: translate(-50%, -100%) rotate(0deg); 
+            z-index: 500;
+            pointer-events: none;
         }
 
-        #controls { position: absolute; top: 20px; right: 20px; pointer-events: auto; }
-        .btn { background: #ff4444; color: white; border: none; padding: 15px; border-radius: 50%; width: 60px; height: 60px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        #controls { top: 20px; right: 20px; display: flex; justify-content: flex-end; pointer-events: auto; }
+        .btn { background: #ff4444; color: white; border: none; padding: 15px; border-radius: 50%; width: 70px; height: 70px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; }
+        .btn:active { background: #cc0000; transform: scale(0.95); }
     </style>
 </head>
 <body>
@@ -37,7 +46,7 @@
 </div>
 
 <div class="overlay" id="compass-container">
-    <div id="bearing-val">0°</div>
+    <div id="bearing-val">---°</div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
